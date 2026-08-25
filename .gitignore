@@ -1,0 +1,29 @@
+# ===== 依赖与构建 =====
+node_modules/
+.pnpm-store/
+.next/
+out/
+build/
+dist/
+
+# ===== 本地数据（含个人简历 / 真实面试数据，不公开）=====
+/data
+/uploads
+/server/data
+
+# ===== 环境变量与密钥 =====
+.env
+.env.local
+.env.*.local
+
+# ===== Word 临时锁文件 =====
+~$*
+
+# ===== 测试文档（含个人面试数据，默认不公开）=====
+# 如需公开：删除本行并在 git add 时使用 -f 强制添加
+测试文档.docx
+
+# ===== 杂项 =====
+.DS_Store
+*.log
+*.tsbuildinfo

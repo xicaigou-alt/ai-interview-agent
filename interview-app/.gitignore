@@ -1,0 +1,33 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# local data & uploads
+/data
+/uploads
+/server/data
+
+# env
+.env
+.env.local
+.env.*.local
+
+# 本机 pnpm store 配置（含机器特定路径，不提交）
+.npmrc
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

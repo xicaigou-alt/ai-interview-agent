@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .input {
+    @apply w-full rounded border border-slate-300 p-2 text-sm;
+  }
+  .btn {
+    @apply rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-50;
+  }
+}
