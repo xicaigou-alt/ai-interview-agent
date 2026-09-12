@@ -3,11 +3,14 @@ import { getJob } from "@/db/repositories/jobs";
 import { listTurns } from "@/db/repositories/interview_turns";
 import {
   findItemByQuestion,
-  getItemById,
   insertItem,
 } from "@/db/repositories/interview_items";
 
-// 面试结束后，把本场的母问题（主问题）沉淀进知识库，来源标记为「模拟面试」+ 公司/岗位
+// 只沉淀"通用"类主问题（知识题 / 情景设计题）；带简历锚点的模板题（实习/项目/行为）一律不回写
+const PERSISTABLE_TYPES = new Set(["AI_KNOWLEDGE", "PRODUCT_DESIGN"]);
+
+// 面试结束后，把本场"生成题"的底题模板沉淀进知识库（检索题已在库中，跳过）。
+// 只沉淀去个性化后的底题，来源标记为 MODEL_GENERATED，避免把带简历锚点的文本回灌造成污染。
 export async function persistPrimaryQuestionsToKnowledge(
   sessionId: number,
 ): Promise<{ inserted: number; skipped: number }> {
@@ -21,29 +24,29 @@ export async function persistPrimaryQuestionsToKnowledge(
   let skipped = 0;
 
   for (const t of primaryTurns) {
-    if (findItemByQuestion(t.questionText)) {
+    // 检索来的题：底题已在知识库中，跳过；带简历锚点的模板题：不回写
+    if (t.questionSourceId != null || !PERSISTABLE_TYPES.has(t.questionType ?? "")) {
       skipped++;
       continue;
     }
 
-    let knowledgePoints: string[] = [];
-    let evaluationRubric: string[] = [];
-    if (t.questionSourceId != null) {
-      const src = getItemById(t.questionSourceId);
-      knowledgePoints = src?.knowledgePoints ?? [];
-      evaluationRubric = src?.evaluationRubric ?? [];
+    // 生成题：只沉淀"去个性化"的底题模板（不含候选人具体经历/公司）
+    const base = t.baseQuestionText?.trim();
+    if (!base || findItemByQuestion(base)) {
+      skipped++;
+      continue;
     }
 
     await insertItem({
-      question: t.questionText,
+      question: base,
       company: job?.company,
       role: job?.role,
       questionType: t.questionType ?? "AI_KNOWLEDGE",
       topics: t.topics,
       difficulty: "medium",
-      sourceType: "SIMULATED_INTERVIEW",
-      knowledgePoints,
-      evaluationRubric,
+      sourceType: "MODEL_GENERATED",
+      knowledgePoints: [],
+      evaluationRubric: [],
     });
 
     inserted++;

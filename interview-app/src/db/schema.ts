@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS interview_turns (
   session_id INTEGER NOT NULL,
   turn_index INTEGER NOT NULL,
   question_text TEXT NOT NULL,
+  base_question_text TEXT,
   question_source_id INTEGER,
   question_type TEXT,
   topics TEXT,

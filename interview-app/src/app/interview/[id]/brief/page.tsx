@@ -5,7 +5,13 @@ import { useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
 
 interface BriefData {
-  profile: { strengths?: string[]; riskPoints?: string[] };
+  profile: {
+    skills?: string[];
+    experience?: Array<{ company: string; role: string; description: string }>;
+    projects?: Array<{ name: string; role?: string; description: string; techStack?: string[] }>;
+    strengths?: string[];
+    riskPoints?: string[];
+  };
   gap: {
     strongMatch?: string[];
     weakMatch?: string[];
@@ -18,6 +24,8 @@ interface BriefData {
     primaryQuestionTarget?: number;
     difficulty?: string;
     priorityTopics?: string[];
+    mainQuestions?: Array<{ dimension: string; target: string; angle?: string }>;
+    knowledgeTopics?: string[];
     sections?: Array<{ type: string; weight: number }>;
   };
 }
@@ -72,17 +80,58 @@ export default function BriefPage() {
       <h1 className="text-2xl font-bold">面试前简报</h1>
 
       <Section title="候选人画像">
+        <h4 className="text-sm font-medium text-slate-600">个人技能</h4>
+        {profile?.skills?.length ? (
+          <TagList items={profile.skills} color="blue" />
+        ) : (
+          <p className="text-slate-400">无</p>
+        )}
+
+        <h4 className="mt-3 text-sm font-medium text-slate-600">实习 / 工作经历</h4>
+        {profile?.experience?.length ? (
+          <ul className="mt-1 space-y-2 text-sm">
+            {profile.experience.map((e, i) => (
+              <li key={i} className="rounded bg-slate-50 p-2">
+                <div className="font-medium">
+                  {e.company}
+                  {e.role ? ` · ${e.role}` : ""}
+                </div>
+                {e.description ? <div className="mt-0.5 text-slate-600">{e.description}</div> : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-slate-400">无</p>
+        )}
+
+        <h4 className="mt-3 text-sm font-medium text-slate-600">项目经历</h4>
+        {profile?.projects?.length ? (
+          <ul className="mt-1 space-y-2 text-sm">
+            {profile.projects.map((p, i) => (
+              <li key={i} className="rounded bg-slate-50 p-2">
+                <div className="font-medium">
+                  {p.name}
+                  {p.role ? `（${p.role}）` : ""}
+                </div>
+                {p.description ? <div className="mt-0.5 text-slate-600">{p.description}</div> : null}
+                {p.techStack?.length ? (
+                  <div className="mt-1.5">
+                    <TagList items={p.techStack} color="blue" />
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-slate-400">无</p>
+        )}
+
         {profile?.strengths?.length ? (
-          <TagList items={profile.strengths} color="green" />
-        ) : (
-          <p className="text-slate-400">无</p>
-        )}
-        <h4 className="mt-2 text-sm font-medium text-slate-600">简历风险点</h4>
-        {profile?.riskPoints?.length ? (
-          <TagList items={profile.riskPoints} color="red" />
-        ) : (
-          <p className="text-slate-400">无</p>
-        )}
+          <>
+            <h4 className="mt-3 text-sm font-medium text-slate-600">亮点</h4>
+            <TagList items={profile.strengths} color="green" />
+          </>
+        ) : null}
       </Section>
 
       <Section title="匹配与差距">
@@ -98,16 +147,26 @@ export default function BriefPage() {
           时长约 {plan?.durationMinutes ?? 40} 分钟 · 目标 {plan?.primaryQuestionTarget ?? 10} 个主问题 ·
           难度 {plan?.difficulty ?? "medium"}
         </p>
-        {plan?.sections?.length ? (
-          <ul className="mt-2 space-y-1 text-sm">
-            {plan.sections.map((s, i) => (
-              <li key={i} className="flex justify-between">
-                <span>{s.type}</span>
-                <span className="text-slate-500">{Math.round(s.weight * 100)}%</span>
+        {plan?.mainQuestions?.length ? (
+          <ol className="mt-3 space-y-1.5 text-sm">
+            {plan.mainQuestions.map((q, i) => (
+              <li key={i} className="flex items-baseline gap-2">
+                <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+                  Q{i + 1}
+                </span>
+                <span className="shrink-0 rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700">
+                  {dimensionLabel(q.dimension)}
+                </span>
+                <span className="text-slate-700">{q.target || (q.angle ? "行为/动机" : "—")}</span>
               </li>
             ))}
-          </ul>
-        ) : null}
+          </ol>
+        ) : (
+          <p className="mt-2 text-sm text-slate-400">暂无主问题计划</p>
+        )}
+        <p className="mt-3 text-xs text-slate-400">
+          主问题均为宽入口开场；技术细节等深挖将在你回答后，由面试官基于你的回答动态追问。
+        </p>
       </Section>
 
       {error && <div className="rounded border border-red-300 bg-red-50 p-3 text-red-700">{error}</div>}
@@ -121,6 +180,17 @@ export default function BriefPage() {
       </button>
     </div>
   );
+}
+
+function dimensionLabel(d: string): string {
+  const map: Record<string, string> = {
+    KNOWLEDGE: "知识",
+    EXPERIENCE: "实习",
+    PROJECT: "项目",
+    BEHAVIORAL: "行为",
+    JD_SCENARIO: "情景",
+  };
+  return map[d] ?? d;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

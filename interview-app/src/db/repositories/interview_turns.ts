@@ -5,6 +5,7 @@ export interface TurnRow {
   sessionId: number;
   turnIndex: number;
   questionText: string;
+  baseQuestionText: string | null;
   questionSourceId: number | null;
   questionType: string | null;
   topics: string[];
@@ -20,6 +21,7 @@ interface TurnDbRow {
   session_id: number;
   turn_index: number;
   question_text: string;
+  base_question_text: string | null;
   question_source_id: number | null;
   question_type: string | null;
   topics: string | null;
@@ -46,6 +48,7 @@ function map(row: TurnDbRow): TurnRow {
     sessionId: row.session_id,
     turnIndex: row.turn_index,
     questionText: row.question_text,
+    baseQuestionText: row.base_question_text,
     questionSourceId: row.question_source_id,
     questionType: row.question_type,
     topics: safeParseArray(row.topics),
@@ -60,6 +63,7 @@ function map(row: TurnDbRow): TurnRow {
 export interface CreateTurnInput {
   sessionId: number;
   questionText: string;
+  baseQuestionText?: string | null;
   questionSourceId?: number | null;
   questionType?: string | null;
   topics?: string[];
@@ -77,13 +81,14 @@ export function createTurn(input: CreateTurnInput): TurnRow {
   const info = db
     .prepare(
       `INSERT INTO interview_turns
-        (session_id, turn_index, question_text, question_source_id, question_type, topics, is_follow_up)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        (session_id, turn_index, question_text, base_question_text, question_source_id, question_type, topics, is_follow_up)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.sessionId,
       nextIndex,
       input.questionText,
+      input.baseQuestionText ?? null,
       input.questionSourceId ?? null,
       input.questionType ?? null,
       JSON.stringify(input.topics ?? []),

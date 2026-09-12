@@ -36,6 +36,13 @@ function makePlan(overrides: Partial<InterviewPlan> = {}): InterviewPlan {
     difficulty: "medium",
     sections: [],
     priorityTopics: [],
+    mainQuestions: [
+      { dimension: "KNOWLEDGE", target: "RAG", angle: "" },
+      { dimension: "EXPERIENCE", target: "腾讯", angle: "" },
+      { dimension: "PROJECT", target: "AI模拟面试Agent", angle: "" },
+      { dimension: "BEHAVIORAL", target: "", angle: "" },
+    ],
+    knowledgeTopics: ["RAG"],
     ...overrides,
   };
 }
@@ -59,16 +66,25 @@ test("updateCandidateState: 弱项与缺失点累计且去重", () => {
   assert.deepEqual(next.weaknesses, ["A", "B", "C"]);
 });
 
-test("selectNextTopic: 优先弱项/未验证 topic", () => {
+test("selectNextTopic: 按 mainQuestions 顺序返回第一道未覆盖主问题", () => {
   const s = emptyState();
-  s.remainingTopics = ["已验证强项", "弱项"];
-  s.competencies["已验证强项"] = { score: 85, verified: true };
-  assert.equal(selectNextTopic(s, makePlan()), "弱项");
+  const q = selectNextTopic(s, makePlan());
+  assert.ok(q);
+  assert.equal(q!.dimension, "KNOWLEDGE");
+  assert.equal(q!.target, "RAG");
+});
+
+test("selectNextTopic: 已覆盖的按 key 跳过", () => {
+  const s = emptyState();
+  s.coveredTopics = ["KNOWLEDGE:RAG"];
+  const q = selectNextTopic(s, makePlan());
+  assert.ok(q);
+  assert.equal(q!.dimension, "EXPERIENCE");
+  assert.equal(q!.target, "腾讯");
 });
 
 test("selectNextTopic: 全部覆盖后返回 null", () => {
   const s = emptyState();
-  s.remainingTopics = [];
-  s.coveredTopics = ["RAG"];
-  assert.equal(selectNextTopic(s, makePlan({ priorityTopics: ["RAG"] })), null);
+  s.coveredTopics = ["KNOWLEDGE:RAG", "EXPERIENCE:腾讯", "PROJECT:AI模拟面试Agent", "BEHAVIORAL:"];
+  assert.equal(selectNextTopic(s, makePlan()), null);
 });

@@ -166,6 +166,40 @@ export function searchItemsByMetadata(filter: ItemFilter): InterviewItem[] {
   return rows.map(map);
 }
 
+export interface CompanyTopicFilter {
+  company: string;
+  role?: string;
+  topic?: string;
+  limit?: number;
+}
+
+// 公司范围检索：company 支持「精确 OR 双向子串」匹配，兼容别名（阿里/阿里巴巴、字节/字节跳动等）。
+// 始终限定目标公司，避免跨公司抓取面经造成岗位针对性污染（评测修复项）。
+export function searchItemsByCompanyTopic(filter: CompanyTopicFilter): InterviewItem[] {
+  const { company, role, topic, limit = 10 } = filter;
+  const clauses: string[] = [];
+  const params: SQLInputValue[] = [];
+
+  clauses.push("(company IS NOT NULL AND company != '' AND (company = ? OR company LIKE '%' || ? || '%' OR ? LIKE '%' || company || '%'))");
+  params.push(company, company, company);
+
+  if (role) {
+    clauses.push("role = ?");
+    params.push(role);
+  }
+  if (topic) {
+    clauses.push("topics LIKE ?");
+    params.push(`%"${topic}"%`);
+  }
+
+  const where = `WHERE ${clauses.join(" AND ")}`;
+  const rows = db
+    .prepare(`SELECT * FROM interview_items ${where} ORDER BY quality_score DESC, id DESC LIMIT ?`)
+    .all(...params, limit) as unknown as ItemDbRow[];
+
+  return rows.map(map);
+}
+
 export function listItems(filter: { sourceType?: SourceType } = {}): InterviewItem[] {
   const clauses: string[] = [];
   const params: SQLInputValue[] = [];

@@ -33,7 +33,8 @@ ${TEMPLATE}
 要求：
 1. highPriorityTopics 与 weakMatch / missingCapabilities 强相关，用于后续面试选题。
 2. resumeRisks 要具体（指出简历哪句表述有风险、为什么）。
-3. 只输出 JSON。
+3. highPriorityTopics 必须是「具体、彼此不重叠」的能力主题，优先取自岗位能力模型里的 competency 名称（如 RAG / Agent / Prompt 工程 / SQL 数据分析 / 产品方案设计 / 抽象思维与问题拆解）；不要产出多个语义相近的主题（如「多项目并行」「多任务管理」「优先级管理」只保留一个），也不要用泛泛的时间管理类主题，除非 JD 明确要求。
+4. 只输出 JSON。
 
 候选人画像：
 ${JSON.stringify(profile)}

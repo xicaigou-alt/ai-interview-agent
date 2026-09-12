@@ -29,6 +29,7 @@ function initDb(): DatabaseSync {
   db.exec(SCHEMA_SQL);
   // 幂等补列：兼容已存在旧库
   ensureColumn(db, "interview_turns", "topics", "TEXT");
+  ensureColumn(db, "interview_turns", "base_question_text", "TEXT");
   ensureColumn(db, "interview_sessions", "title", "TEXT");
   ensureColumn(db, "interview_sessions", "question_target", "INTEGER");
   ensureColumn(db, "interview_sessions", "requirement", "TEXT");

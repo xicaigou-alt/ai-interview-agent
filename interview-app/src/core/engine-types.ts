@@ -39,14 +39,34 @@ export const PlanSectionSchema = z.object({
   weight: z.number(),
 });
 
+export const PlanDimensionSchema = z.enum([
+  "KNOWLEDGE",
+  "EXPERIENCE",
+  "PROJECT",
+  "BEHAVIORAL",
+  "JD_SCENARIO",
+]);
+
+// 结构化主问题：dimension 决定怎么出题，target 是指向（公司/项目/知识点/场景描述），
+// angle 用于「换角度深挖/扩展」题：填写完整题目文本（以问号结尾），target 保持原指向。
+export const PlanQuestionSchema = z.object({
+  dimension: PlanDimensionSchema,
+  target: z.string().default(""),
+  angle: z.string().default(""),
+});
+
 export const InterviewPlanSchema = z.object({
   durationMinutes: z.number().default(40),
   primaryQuestionTarget: z.number().default(10),
   difficulty: z.string().default("medium"),
   sections: z.array(PlanSectionSchema).default([]),
   priorityTopics: z.array(z.string()).default([]),
+  mainQuestions: z.array(PlanQuestionSchema).default([]),
+  knowledgeTopics: z.array(z.string()).default([]),
 });
 export type InterviewPlan = z.infer<typeof InterviewPlanSchema>;
+export type PlanDimension = z.infer<typeof PlanDimensionSchema>;
+export type PlanQuestion = z.infer<typeof PlanQuestionSchema>;
 
 // ============ Evaluation（§24.1） ============
 export const EvaluationSchema = z.object({

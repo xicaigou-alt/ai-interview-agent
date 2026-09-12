@@ -1,7 +1,12 @@
-import type { CandidateState, Evaluation, InterviewPlan } from "../engine-types";
+import type { CandidateState, Evaluation, InterviewPlan, PlanQuestion } from "../engine-types";
 
 function dedupe(arr: string[]): string[] {
   return [...new Set(arr)];
+}
+
+// 主问题的稳定标识：dimension + target（+ angle 区分"换角度"题）
+export function planQuestionKey(q: PlanQuestion): string {
+  return `${q.dimension}:${q.target}${q.angle ? "#" + q.angle : ""}`;
 }
 
 // 每次回答后更新候选人工作记忆（§26）
@@ -46,25 +51,17 @@ export function updateCandidateState(
   return next;
 }
 
-// 选题：优先弱项 / 未验证 topic；已验证强项降权（§26.1）
+// 选题：按 InterviewPlan.mainQuestions 的结构化顺序推进，已覆盖的跳过（§26.1 / 问题方案 v2）
+// 返回下一道主问题（PlanQuestion）；全部覆盖后返回 null。
 export function selectNextTopic(
   state: CandidateState,
   plan: InterviewPlan,
-): string | null {
+): PlanQuestion | null {
   const covered = new Set(state.coveredTopics ?? []);
 
-  const pool = dedupe([
-    ...(plan.priorityTopics ?? []).filter((t) => !covered.has(t)),
-    ...(state.remainingTopics ?? []).filter((t) => !covered.has(t)),
-  ]);
+  for (const q of plan.mainQuestions ?? []) {
+    if (!covered.has(planQuestionKey(q))) return q;
+  }
 
-  if (pool.length === 0) return null;
-
-  const weak = pool.filter(
-    (t) =>
-      (state.weaknesses ?? []).includes(t) ||
-      state.competencies?.[t]?.verified !== true,
-  );
-
-  return (weak.length > 0 ? weak : pool)[0];
+  return null;
 }
